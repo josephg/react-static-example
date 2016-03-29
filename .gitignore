@@ -1,0 +1,4 @@
+.*.swp
+node_modules
+public/build.js
+npm-debug.log
