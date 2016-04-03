@@ -4,7 +4,7 @@ const express = require('express');
 const serialize = require('serialize-javascript');
 
 const {match, RouterContext} = require('react-router');
-const {routes} = require('./app');
+const {routesWithStore} = require('./app');
 
 const {createStore} = require('redux');
 import { Provider } from 'react-redux';
@@ -22,35 +22,40 @@ const Index = props => (
 app.use(express.static('public'));
 
 app.get('*', (req, res, next) => {
-  match({routes, location: req.url}, (err, redirect, props) => {
-    if (err) return next(err);
+	if (req.location === '/404') return next();
+
+	const store = createStore(reducers);
+  match({routes:routesWithStore(store), location: req.url}, (err, redirect, props) => {
+    if (err) return err === 404 ? next() : next(err);
 
     if (redirect) {
+			// if (redirect.pathname === '/404') return next();
 			return res.redirect(302, redirect.pathname + redirect.search);
 		} else if (!props) {
 			// 404.
 			return next();
     } else {
 			// Normal render.
-      const store = createStore(reducers);
+			if (req.url === '/404') res.status(404);
+      // Promise.all(props.components
+      //   .map(c => c.getData)
+      //   .filter(getData => !!getData)
+      //   .map(getData => getData(store)))
+      // .then(() => {
 
-      Promise.all(props.components
-        .map(c => c.getData)
-        .filter(getData => !!getData)
-        .map(getData => getData(store)))
-      .then(() => {
-        const markup = dom.renderToString(
-          <Provider store={store}>
-            <RouterContext {...props} />
-          </Provider>
-        );
-        res.send(`<!DOCTYPE html>
-          <body>
-          <div id="app">${markup}</div>
-          <script>window.__INITIAL_STATE__ = ${serialize(store.getState())};</script>
-          <script src="build.js"></script>
-          </body>`);
-      }).catch(err => next(err));
+			// console.log(props);
+      const markup = dom.renderToString(
+        <Provider store={store}>
+          <RouterContext {...props} />
+        </Provider>
+      );
+      res.send(`<!DOCTYPE html>
+        <body>
+        <div id="app">${markup}</div>
+        <script>window.__INITIAL_STATE__ = ${serialize(store.getState())};</script>
+        <script src="/build.js"></script>
+        </body>`);
+      // }).catch(err => next(err));
     }
   });
 });

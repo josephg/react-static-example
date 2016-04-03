@@ -1,24 +1,38 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Router } from 'react-router';
+import { match, browserHistory, Router } from 'react-router';
+
 import { createStore } from 'redux'
 import { Provider } from 'react-redux'
-import { browserHistory } from 'react-router'
 
-import { routes } from './app';
+import { routesWithStore } from './app';
 const reducers = require('./reducers');
 
 const store = createStore(reducers, window.__INITIAL_STATE__);
+const routes = routesWithStore(store);
 
 const onUpdate = function() {
-  this.state.components.forEach(c => {
-    if (c.getData) c.getData(store);
-  });
+  // this.state.components.forEach(c => {
+  //   if (c.getData) c.getData(store);
+  // });
 };
 
-ReactDOM.render(
-  <Provider store={store}>
-    <Router routes={routes} history={browserHistory} onUpdate={onUpdate} />
-  </Provider>,
-  document.getElementById('app')
-);
+const onError = function(err) {
+  console.error(err);
+};
+
+match({history:browserHistory, routes}, (err, redirect, props) => {
+  ReactDOM.render(
+    <Provider store={store}>
+      <Router {...props} onUpdate={onUpdate} onError={onError} />
+    </Provider>,
+    document.getElementById('app')
+  );
+});
+
+// ReactDOM.render(
+//   <Provider store={store}>
+//     <Router routes={routes} history={browserHistory} onUpdate={onUpdate} />
+//   </Provider>,
+//   document.getElementById('app')
+// );

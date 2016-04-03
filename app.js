@@ -14,15 +14,17 @@ const App = ({children}) => (
 	</div>
 );
 
+// App.getData = (store) => {throw Error("omg error")};
+
 const Index = props => (
 	<div>This is an index page. Whoa.</div>
 );
 
-const about = () => (
-  <h1>About page!</h1>
+const about = ({y}) => (
+  <h1>About page! Y is {y}</h1>
 );
 
-const About = connect((state) => ({}))(about);
+const About = connect((state) => ({y:state.y}))(about);
 
 
 // 1
@@ -44,31 +46,73 @@ const dancing = React.createClass({
 	},
 	render() {
 		return <h1>Dancing {this.props.x}</h1>;
+	},
+
+	otherStuff() {
+		return 10;
 	}
 });
 
 const Dancing = connect((state) => ({x:state.x}))(dancing);
 
-Dancing.getData = store => new Promise((resolve, reject) => {
-	console.log('dance get data', store.getState());
-	if (store.getState().x == null) {
-		// get x.
+Dancing.getData = store => {
+	if (store.getState().x != null) return Promise.resolve();
+
+	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			store.dispatch({type: 'SETX', x: 10});
 			resolve();
 			console.log('ok done', store.getState());
 		}, 500);
-	} else {
-		resolve();
-	}
-});
+	});
+};
 
-exports.routes = {
+const WithArg = ({params}) => {
+	return <p>{params.bar}</p>
+}
+
+About.getData = store => {
+	// Triggers onError.
+	// return Promise.reject(new Error('blah'));
+
+	// Triggers 404.
+	return Promise.reject();
+
+	// return Promise.resolve();
+}
+
+const load = store => function(nextState, replace, callback) {
+	const getData = this.component.getData;
+	if (getData) try {
+		getData(store).then(
+			() => callback(),
+			(err) => {
+				if (!err) {
+					// 404.
+					// The server will understand this and reply with a 404 immediately.
+					// (Instead of redirecting via /404).
+					if (process.title !== 'browser') err = 404;
+					else replace('/404');
+				}
+				callback(err);
+			});
+	} catch (e) { console.log('1'); callback(e); }
+};
+
+const NotFound = () => <h1>Page not Found! Oh. My. God.</h1>;
+
+exports.routesWithStore = store => ({
   path: '',
   component: App,
   childRoutes: [
     { path: '/', component: Index },
-    { path: '/about', component: About },
-    { path: '/dancing', component: Dancing }
+    {
+			path: '/about',
+			component: About,
+			onEnter: load(store)
+		},
+    { path: '/dancing', component: Dancing, onEnter: load(store) },
+		{ path: '/foo/:bar', component: WithArg },
+		{ path: '/404', component: NotFound }
   ]
-};
+});
