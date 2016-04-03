@@ -37,13 +37,7 @@ app.get('*', (req, res, next) => {
     } else {
 			// Normal render.
 			if (req.url === '/404') res.status(404);
-      // Promise.all(props.components
-      //   .map(c => c.getData)
-      //   .filter(getData => !!getData)
-      //   .map(getData => getData(store)))
-      // .then(() => {
 
-			// console.log(props);
       const markup = dom.renderToString(
         <Provider store={store}>
           <RouterContext {...props} />

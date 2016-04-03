@@ -11,12 +11,6 @@ const reducers = require('./reducers');
 const store = createStore(reducers, window.__INITIAL_STATE__);
 const routes = routesWithStore(store);
 
-const onUpdate = function() {
-  // this.state.components.forEach(c => {
-  //   if (c.getData) c.getData(store);
-  // });
-};
-
 const onError = function(err) {
   console.error(err);
 };
@@ -29,10 +23,3 @@ match({history:browserHistory, routes}, (err, redirect, props) => {
     document.getElementById('app')
   );
 });
-
-// ReactDOM.render(
-//   <Provider store={store}>
-//     <Router routes={routes} history={browserHistory} onUpdate={onUpdate} />
-//   </Provider>,
-//   document.getElementById('app')
-// );
