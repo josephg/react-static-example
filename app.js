@@ -50,12 +50,10 @@ const dancing = React.createClass({
 
 	otherStuff() {
 		return 10;
-	}
+	},
 });
 
-const Dancing = connect((state) => ({x:state.x}))(dancing);
-
-Dancing.getData = store => {
+dancing.getData = (store) => {
 	if (store.getState().x != null) return Promise.resolve();
 
 	return new Promise((resolve, reject) => {
@@ -66,6 +64,10 @@ Dancing.getData = store => {
 		}, 500);
 	});
 };
+
+const Dancing = connect((state) => ({x:state.x}))(dancing);
+
+Dancing.getData = dancing.getData;
 
 const WithArg = ({params}) => {
 	return <p>{params.bar}</p>

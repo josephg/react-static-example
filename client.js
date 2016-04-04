@@ -18,7 +18,7 @@ const onError = function(err) {
 match({history:browserHistory, routes}, (err, redirect, props) => {
   ReactDOM.render(
     <Provider store={store}>
-      <Router {...props} onUpdate={onUpdate} onError={onError} />
+      <Router {...props} onError={onError} />
     </Provider>,
     document.getElementById('app')
   );
