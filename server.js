@@ -10,43 +10,53 @@ const {createStore} = require('redux');
 import { Provider } from 'react-redux';
 const reducers = require('./reducers');
 
+import {StyleSheetServer} from 'aphrodite';
+
+
 const app = express();
 
-
-
 const Index = props => (
-	<div>This is an index page. Whoa.</div>
+  <div>This is an index page. Whoa.</div>
 );
 
 
 app.use(express.static('public'));
 
 app.get('*', (req, res, next) => {
-	if (req.location === '/404') return next();
+  if (req.location === '/404') return next();
 
-	const store = createStore(reducers);
+  const store = createStore(reducers);
   match({routes:routesWithStore(store), location: req.url}, (err, redirect, props) => {
     if (err) return err === 404 ? next() : next(err);
 
     if (redirect) {
-			// if (redirect.pathname === '/404') return next();
-			return res.redirect(302, redirect.pathname + redirect.search);
-		} else if (!props) {
-			// 404.
-			return next();
+      // if (redirect.pathname === '/404') return next();
+      return res.redirect(302, redirect.pathname + redirect.search);
+    } else if (!props) {
+      // 404.
+      return next();
     } else {
-			// Normal render.
-			if (req.url === '/404') res.status(404);
+      // Normal render.
+      if (req.url === '/404') res.status(404);
 
-      const markup = dom.renderToString(
-        <Provider store={store}>
-          <RouterContext {...props} />
-        </Provider>
-      );
+      const {html, css} = StyleSheetServer.renderStatic(() =>
+        dom.renderToString(
+          <Provider store={store}>
+            <RouterContext {...props} />
+          </Provider>
+      ));
+
+      console.log('server css object is', css);
       res.send(`<!DOCTYPE html>
+        <head>
+          <style data-aphrodite>${css.content}</style>
+        </head>
         <body>
-        <div id="app">${markup}</div>
-        <script>window.__INITIAL_STATE__ = ${serialize(store.getState())};</script>
+        <div id="app">${html}</div>
+        <script>
+          window.__INITIAL_STATE__ = ${serialize(store.getState())};
+          window.__CSS_NAMES__ = ${JSON.stringify(css.renderedClassNames)};
+        </script>
         <script src="/build.js"></script>
         </body>`);
       // }).catch(err => next(err));
